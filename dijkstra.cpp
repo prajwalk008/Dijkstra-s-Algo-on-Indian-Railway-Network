@@ -9,6 +9,7 @@
 #include <string>
 #include <fstream>
 #include <iomanip>
+#include <sstream>
 
 using namespace std;
 
@@ -380,149 +381,76 @@ void printGraphStats(const map<string, vector<Edge>>& graph) {
     cout << "\n" << endl;
 }
 
+// Function to load graph from file
+// File format: source destination weight (one edge per line)
+// Lines starting with # are treated as comments
+bool loadGraphFromFile(map<string, vector<Edge>>& graph, const string& filename = "graph_data.txt") {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "Error: Could not open file \"" << filename << "\"" << endl;
+        cerr << "Please make sure the file exists in the same directory as the executable." << endl;
+        return false;
+    }
+    
+    string line;
+    int lineNumber = 0;
+    int edgesLoaded = 0;
+    
+    while (getline(file, line)) {
+        lineNumber++;
+        
+        // Trim whitespace
+        line.erase(0, line.find_first_not_of(" \t"));
+        line.erase(line.find_last_not_of(" \t") + 1);
+        
+        // Skip empty lines and comments
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        
+        // Parse line: source destination weight
+        istringstream iss(line);
+        string source, destination;
+        int weight;
+        
+        if (iss >> source >> destination >> weight) {
+            // Validate weight is positive
+            if (weight <= 0) {
+                cerr << "Warning: Line " << lineNumber << " has invalid weight (" << weight 
+                     << "). Skipping." << endl;
+                continue;
+            }
+            
+            graph[source].push_back(Edge(destination, weight));
+            edgesLoaded++;
+        } else {
+            cerr << "Warning: Line " << lineNumber << " has invalid format. Skipping." << endl;
+            cerr << "  Expected format: source destination weight" << endl;
+            cerr << "  Got: " << line << endl;
+        }
+    }
+    
+    file.close();
+    
+    if (edgesLoaded == 0) {
+        cerr << "Error: No valid edges found in file." << endl;
+        return false;
+    }
+    
+    cout << "Successfully loaded " << edgesLoaded << " edges from \"" << filename << "\"" << endl;
+    return true;
+}
+
 int main() {
     // Graph representation: map from string (vertex name) to list of edges
     map<string, vector<Edge>> graph;
     
-    // Build adjacency list
-    // Format: graph["source"].push_back(Edge("destination", weight));
+    // Load graph from file
+    if (!loadGraphFromFile(graph)) {
+        cerr << "Failed to load graph data. Exiting." << endl;
+        return 1;
+    }
     
-    // Example: City graph
-    graph["NGP"].push_back(Edge("SEGM", 76));
-    graph["NGP"].push_back(Edge("NRKR", 86));
-    graph["NGP"].push_back(Edge("CWA", 150));
-    graph["NGP"].push_back(Edge("TMR", 80));
-
-    graph["SEGM"].push_back(Edge("WR", 2));
-    graph["SEGM"].push_back(Edge("BPQ", 132));
-    graph["SEGM"].push_back(Edge("NGP", 76));
-    
-    graph["NRKR"].push_back(Edge("NGP", 86));
-    graph["NRKR"].push_back(Edge("BD", 138));
-    graph["NRKR"].push_back(Edge("AMLA", 82));
-    
-    graph["CWA"].push_back(Edge("AMLA", 115));
-    graph["CWA"].push_back(Edge("NIR", 139));
-    graph["CWA"].push_back(Edge("NGP", 150));
-    
-    graph["TMR"].push_back(Edge("BTC", 90));
-    graph["TMR"].push_back(Edge("G", 49));
-    graph["TMR"].push_back(Edge("NGP", 80));
-    
-    graph["WR"].push_back(Edge("BPQ", 132));
-    graph["WR"].push_back(Edge("BD", 95));
-    graph["WR"].push_back(Edge("SEGM", 2));
-    
-    graph["BPQ"].push_back(Edge("WR", 132));
-    graph["BPQ"].push_back(Edge("SEGM", 132));
-    graph["BPQ"].push_back(Edge("G", 250));
-    graph["BPQ"].push_back(Edge("PDPL", 159));
-    
-    graph["BD"].push_back(Edge("NRKR", 138));
-    graph["BD"].push_back(Edge("WR", 95));
-    graph["BD"].push_back(Edge("AK", 79));
-    
-    graph["AMLA"].push_back(Edge("NRKR", 82));
-    graph["AMLA"].push_back(Edge("CWA", 115));
-    graph["AMLA"].push_back(Edge("ET", 130));
-    
-    graph["NIR"].push_back(Edge("CWA", 139));
-    graph["NIR"].push_back(Edge("JBP", 120));
-    graph["NIR"].push_back(Edge("BTC", 75));
-    
-    graph["BTC"].push_back(Edge("TMR", 90));
-    graph["BTC"].push_back(Edge("G", 41));
-    graph["BTC"].push_back(Edge("NIR", 75));
-    
-    graph["G"].push_back(Edge("TMR", 49));
-    graph["G"].push_back(Edge("BTC", 41));
-    graph["G"].push_back(Edge("DURG", 135));
-    graph["G"].push_back(Edge("BPQ", 250));
-    
-    graph["PDPL"].push_back(Edge("KZJ", 75));
-    graph["PDPL"].push_back(Edge("BPQ", 159));
-    graph["PDPL"].push_back(Edge("NZB", 178));
-    
-    graph["AK"].push_back(Edge("BD", 79));
-    graph["AK"].push_back(Edge("WHM", 79));
-    graph["AK"].push_back(Edge("BSL", 139));
-    
-    graph["ET"].push_back(Edge("AMLA", 130));
-    graph["ET"].push_back(Edge("KNW", 183));
-    graph["ET"].push_back(Edge("JBP", 244));
-    graph["ET"].push_back(Edge("BPL", 92));
-    
-    graph["JBP"].push_back(Edge("ET", 244));
-    graph["JBP"].push_back(Edge("NIR", 120));
-    graph["JBP"].push_back(Edge("KTE", 91));
-    
-    graph["DURG"].push_back(Edge("G", 135));
-    graph["DURG"].push_back(Edge("R", 37));
-    
-    graph["KZJ"].push_back(Edge("PDPL", 75));
-    graph["KZJ"].push_back(Edge("SC", 131));
-    graph["KZJ"].push_back(Edge("DKJ", 95));
-    graph["KZJ"].push_back(Edge("KCG", 138));
-
-    graph["NZB"].push_back(Edge("PAU", 141));
-    graph["NZB"].push_back(Edge("SC", 161));
-    graph["NZB"].push_back(Edge("KCG", 166));
-
-    graph["WHM"].push_back(Edge("AK", 79));
-    graph["WHM"].push_back(Edge("PAU", 128));
-
-    graph["BSL"].push_back(Edge("AK", 139));
-    graph["BSL"].push_back(Edge("KNW", 123));
-    graph["BSL"].push_back(Edge("JL", 24));
-
-    graph["KNW"].push_back(Edge("BSL", 123));
-    graph["KNW"].push_back(Edge("ET", 183));
-
-    graph["BPL"].push_back(Edge("ET", 92));
-    graph["BPL"].push_back(Edge("BINA", 138));
-    graph["BPL"].push_back(Edge("MKC", 138));   
-
-    graph["KTE"].push_back(Edge("JBP", 91));
-    graph["KTE"].push_back(Edge("BINA", 262));
-    graph["KTE"].push_back(Edge("PRYJ", 276));
-    graph["KTE"].push_back(Edge("APR", 163));
-
-    graph["R"].push_back(Edge("DURG", 37));
-    graph["R"].push_back(Edge("BSP", 111));
-    graph["R"].push_back(Edge("TIG", 203));
-
-    graph["SC"].push_back(Edge("HYB", 9));
-    graph["SC"].push_back(Edge("VKB", 72));
-    graph["SC"].push_back(Edge("KCG", 7));
-    graph["SC"].push_back(Edge("KZJ", 131));
-    graph["SC"].push_back(Edge("NZB", 161));
-    graph["SC"].push_back(Edge("GNT", 281));
-
-    graph["KCG"].push_back(Edge("SC", 7));
-    graph["KCG"].push_back(Edge("DHNE", 290));
-    graph["KCG"].push_back(Edge("KSN", 196));
-    graph["KCG"].push_back(Edge("KZJ", 138));
-    graph["KCG"].push_back(Edge("GNT", 285));
-    graph["KCG"].push_back(Edge("NZB", 167));
-
-    graph["PAU"].push_back(Edge("WHM", 128));
-    // Incomplete
-
-    graph["JL"].push_back(Edge("BSL", 24));
-    graph["JL"].push_back(Edge("MMR", 160));
-    graph["JL"].push_back(Edge("ST", 311));
-
-    graph["BINA"].push_back(Edge("BPL", 138));
-    graph["BINA"].push_back(Edge("GUNA", 118));
-    graph["BINA"].push_back(Edge("KTE", 262));
-    graph["BINA"].push_back(Edge("VGLJ", 153));
-
-    graph["MKC"].push_back(Edge("BPL", 138));
-    graph["MKC"].push_back(Edge("GUNA", 214));
-    graph["MKC"].push_back(Edge("DWX", 36));
-    graph["MKC"].push_back(Edge("UJN", 41));
-    
-
     // Menu for visualization
     int choice;
     cout << "\n=== Graph Visualization Menu ===" << endl;
