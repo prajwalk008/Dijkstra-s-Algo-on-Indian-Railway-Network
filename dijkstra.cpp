@@ -231,7 +231,7 @@ void findAlternativePaths(const map<string, vector<Edge>>& graph,
          });
     
     // Print up to 10 shortest paths (or all if fewer than 10)
-    size_t maxPathsToShow = min<size_t>(10, sortedPaths.size());
+    size_t maxPathsToShow = min<size_t>(5, sortedPaths.size());
     int pathNum = 1;
     for (size_t idx = 0; idx < maxPathsToShow; idx++) {
         const auto& pathInfo = sortedPaths[idx];
